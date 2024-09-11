@@ -37,7 +37,7 @@ export const sendMessage = async (message: string): Promise<{
     }
   ])
 
-  const relpy = await streamUI({
+  const reply = await streamUI({
     model: openai("gpt-3.5-turbo"),
     messages: [
       { role: "user", content, toolInvocation: [] },
@@ -48,7 +48,14 @@ export const sendMessage = async (message: string): Promise<{
         <Loader2 className="h-5 w-5 animate-spin stroke-zinc-900" />
       </BotMessage>
     ),
+    text: ({ content, done }) => {
+      if (done) history.done([...history.get(), { role: 'assistant', content }]);
 
+      return <BotMessage>{content}</BotMessage>;
+    },
+    tools: (
+      
+    )
   })
 
 
@@ -56,7 +63,7 @@ export const sendMessage = async (message: string): Promise<{
     id: Date.now(),
     role: 'assistant',
     display: <div>Hello</div>,
-  };
+  };                                                                                                        
 };
 
 export type AIState = Array<{
