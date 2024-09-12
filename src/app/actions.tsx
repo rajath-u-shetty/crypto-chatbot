@@ -4,8 +4,16 @@ import { createAI, getMutableAIState, streamUI } from "ai/rsc"
 import type { CoreMessage, ToolInvocation } from "ai"
 import type { ReactNode } from "react";
 import { openai } from "@ai-sdk/openai"
-import { BotMessage } from "@/components/llm/message";
+import { BotCard, BotMessage } from "@/components/llm/message";
 import { Loader2 } from "lucide-react";
+import { z } from "zod";
+import { env } from "@/env";
+import { MainClient } from 'binance';
+
+const binance = new MainClient({
+  api_key: env.BINANCE_API_KEY,
+  api_secret: env.BINANCE_API_SECRET,
+});
 
 const content = `\
 You are a crypto bot and you can help users get the prices of cryptocurrencies.
@@ -53,17 +61,40 @@ export const sendMessage = async (message: string): Promise<{
 
       return <BotMessage>{content}</BotMessage>;
     },
-    tools: (
-      
-    )
+    temperature: 0,
+    tools: {
+      get_crypto_price: {
+        description:
+          "Get the current price of a given cryptocurrency. Use this to show the price to the user.",
+        parameters: z.object({
+          symbol: z.string().describe("The name or symbol of the cryptocurrency. e.g. BTC/ETH/SOL.")
+        }),
+        generate: async function*({ symbol }: { symbol: string }) {
+          console.log(symbol)
+          yield (
+            <BotCard>
+              Loading..
+            </BotCard>
+          )
+
+          return null;
+        }
+      },
+      get_crypto_stats: {
+        description: "Get the current stats of a given cryptocurrency. Use this to show the stats to the user.",
+        parameters: z.object({
+          slug: z.string().describe("The full name of the cryptocurrency in lowercase. e.g. bitcoin/ethereum/solana.")
+        }),
+      },
+    }
   })
 
 
   return {
     id: Date.now(),
     role: 'assistant',
-    display: <div>Hello</div>,
-  };                                                                                                        
+    display: reply.value,
+  };
 };
 
 export type AIState = Array<{
